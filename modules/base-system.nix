@@ -24,7 +24,7 @@
     enable = true;
     settings.PasswordAuthentication = false;
     settings.KbdInteractiveAuthentication = false;
-    #settings.PermitRootLogin = lib.mkOverride 999 "yes";
+    settings.PermitRootLogin = lib.mkOverride 999 "yes";
   };
 
   services.qemuGuest.enable = true;
