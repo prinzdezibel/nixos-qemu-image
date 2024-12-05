@@ -4,7 +4,7 @@
 }:
 {
   services.cloud-init = {
-    enable = false;
+    enable = true;
     network.enable = true;
     config = ''
       system_info:
