@@ -1,8 +1,8 @@
 {
   inputs = {
     #nixpkgs.url = "/mnt/home/michael/github/NixOS/nixpkgs";
-    #nixpkgs.url = "github:prinzdezibel/nixpkgs?ref=master";
-    nixpkgs.url = "github:NixOS/nixpkgs?ref=master";
+    nixpkgs.url = "github:prinzdezibel/nixpkgs?ref=master";
+    #nixpkgs.url = "github:NixOS/nixpkgs?ref=master";
     
     moduleDir = {
       url = "path:./modules";
