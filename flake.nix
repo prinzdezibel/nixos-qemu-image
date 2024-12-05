@@ -3,7 +3,7 @@
     #nixpkgs.url = "/mnt/home/michael/github/NixOS/nixpkgs";
     nixpkgs.url = "github:prinzdezibel/nixpkgs?ref=master";
     #nixpkgs.url = "github:NixOS/nixpkgs?ref=master";
-    
+
     moduleDir = {
       url = "path:./modules";
       flake = false;
@@ -19,7 +19,7 @@
     let
 
       buildSystem = "aarch64-linux"; # Change this if you're building on Intel arch
-      
+
       platformConfigMatrix = {
         x86_64-linux = "x86_64-unknown-linux-gnu"; # target build configuration for x86_64 builds
         aarch64-linux = "aarch64-unknown-linux-gnu"; # target build configuration for arm builds
@@ -107,10 +107,9 @@
             "${moduleDir}/cloud-init.nix"
             "${modulesPath}/profiles/perlless.nix"
             "${modulesPath}/profiles/minimal.nix"
+            "${modulesPath}/profiles/clone-config.nix"
           ];
 
-
-          
           # Supposed way of configuring, but that uses qemu + binfmt?? and is veeerrrrry slow..
           # nixpkgs.hostPlatform = buildSystem;
 
@@ -143,6 +142,15 @@
             grub.enable = false;
           };
 
+          installer = {
+            cloneConfigIncludes = [
+              #''"''${modulesPath}/profiles/qemu-guest.nix"''
+              "./modules"
+            ];
+            cloneConfigExtra = ''
+              system.stateVersion = "${lib.version}";
+            '';
+          };
         };
 
       nixosConfigurations = forAllSystems (
