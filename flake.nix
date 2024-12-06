@@ -79,19 +79,30 @@
                     inherit (config.virtualisation) diskSize;
                     format = "qcow2";
                     partitionTableType = "hybrid";
-
+                    configFile = pkgs.writeText "configuration.nix" ''
+                      {pkgs, ...}: {
+                          imports = [ ./modules ];
+                      }
+                    '';
                     contents = [
+
+                      # Touch /etc/os-release (needed by activation script)
                       {
-                        # Touch /etc/os-release (needed by activation script)
                         source = pkgs.writeText "os-release" '''';
-                        target = "/etc/os-release";
-                        mode = "0744";
-                        #   user = "root";
-                        #   group = "root";
+                        target = "etc/os-release";
                       }
                       {
-                        source = moduleDir;
-                        target = "/etc/nixos/modules/";
+                        source = ./modules/base-system.nix;
+                        #source = "${moduleDir}/base-system.nix";
+                        target = "etc/nixos/modules/base-system.nix";
+                      }
+                      {
+                        source = "${moduleDir}/cloud-init.nix";
+                        target = "etc/nixos/modules/cloud-init.nix";
+                      }
+                      {
+                        source = "${moduleDir}/default.nix";
+                        target = "etc/nixos/modules/default.nix";
                       }
                     ];
                   }
@@ -101,13 +112,15 @@
                 );
               }
             )
-            #<nixpkgs/nixos/modules/profiles/qemu-guest.nix>
+
+            #"${moduleDir}/base-system.nix"
+            ./modules/base-system.nix
+            #./modules/cloud-init.nix
+            #"${moduleDir}/cloud-init.nix"
             #"${modulesPath}/profiles/qemu-guest.nix"
-            "${moduleDir}/base-system.nix"
-            "${moduleDir}/cloud-init.nix"
             "${modulesPath}/profiles/perlless.nix"
             "${modulesPath}/profiles/minimal.nix"
-            "${modulesPath}/profiles/clone-config.nix"
+            #"${modulesPath}/profiles/clone-config.nix"
           ];
 
           # Supposed way of configuring, but that uses qemu + binfmt?? and is veeerrrrry slow..
@@ -142,15 +155,14 @@
             grub.enable = false;
           };
 
-          installer = {
-            cloneConfigIncludes = [
-              #''"''${modulesPath}/profiles/qemu-guest.nix"''
-              "./modules"
-            ];
-            cloneConfigExtra = ''
-              system.stateVersion = "${lib.version}";
-            '';
-          };
+          # installer = {
+          #   cloneConfigIncludes = [
+          #     "./modules"
+          #   ];
+          #   cloneConfigExtra = ''
+          #     system.stateVersion = "${lib.version}";
+          #   '';
+          # };
         };
 
       nixosConfigurations = forAllSystems (

@@ -43,6 +43,6 @@ in
   imports = umport {
     path = ./.;
     exclude = [ ./default.nix ];
-    #copyToStore = true;
+    copyToStore = false;
   };
 }

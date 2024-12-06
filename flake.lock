@@ -4,7 +4,7 @@
       "flake": false,
       "locked": {
         "lastModified": 1,
-        "narHash": "sha256-DFVa/6F2bdsivlMmkV0nrG4Hw05TxAgFY2xLE1cai7k=",
+        "narHash": "sha256-QwIwLjlyDPLXvxjc81+uvEyBV5/Kz0EHbtjW5rNTZuc=",
         "path": "./modules",
         "type": "path"
       },
@@ -15,11 +15,11 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1733408581,
-        "narHash": "sha256-0Mb91y2FK3g2qfTOgpQptJ5dQtO+O4mNptPlWxdA6x4=",
+        "lastModified": 1733512999,
+        "narHash": "sha256-De6TmSIS1v8HN4IIA81RoQ+4jwunzsDzJE+eCD4oChc=",
         "owner": "prinzdezibel",
         "repo": "nixpkgs",
-        "rev": "d1b8c0e883c08412519ca310bb60e2331b15d25d",
+        "rev": "cc00e0832310bbae4b0071c8e01eec550ee36b10",
         "type": "github"
       },
       "original": {
