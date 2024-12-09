@@ -1,25 +1,12 @@
 {
   "nodes": {
-    "moduleDir": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1,
-        "narHash": "sha256-QwIwLjlyDPLXvxjc81+uvEyBV5/Kz0EHbtjW5rNTZuc=",
-        "path": "./modules",
-        "type": "path"
-      },
-      "original": {
-        "path": "./modules",
-        "type": "path"
-      }
-    },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1733512999,
-        "narHash": "sha256-De6TmSIS1v8HN4IIA81RoQ+4jwunzsDzJE+eCD4oChc=",
+        "lastModified": 1733785223,
+        "narHash": "sha256-ugK+VnAMnUniVSIlBaDJ0GBGCGHR3e2lUNmKZks8wlQ=",
         "owner": "prinzdezibel",
         "repo": "nixpkgs",
-        "rev": "cc00e0832310bbae4b0071c8e01eec550ee36b10",
+        "rev": "44e5d71b18d0dea3f12387ad0273a517a9e9dab3",
         "type": "github"
       },
       "original": {
@@ -31,7 +18,6 @@
     },
     "root": {
       "inputs": {
-        "moduleDir": "moduleDir",
         "nixpkgs": "nixpkgs"
       }
     }

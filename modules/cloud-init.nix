@@ -5,15 +5,15 @@
 {
   services.cloud-init = {
     enable = true;
-    network.enable = true;
+    #network.enable = true;
     config = ''
       system_info:
         distro: nixos
-        network:
-          renderers: [ 'networkd' ]
+        #network:
+        #  renderers: [ 'networkd' ]
       users:
           - default
-      #ssh_pwauth: false
+      ssh_pwauth: false
       chpasswd:
         expire: false
       cloud_init_modules:

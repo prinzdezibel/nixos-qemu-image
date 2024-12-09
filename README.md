@@ -45,3 +45,12 @@ Build Intel based qcow image:
 nix build .#nixosConfigurations.x86_64-linux.config.system.build.qcow
 ```
 
+Add channel
+```
+nix-channel --add https://nixos.org/channels/nixos-24.11 nixos
+```
+
+Update channel and rebuild
+```
+nixos-rebuild boot -I nixos-config=/etc/nixos/configuration.nix --upgrade
+```

@@ -3,17 +3,12 @@
     #nixpkgs.url = "/mnt/home/michael/github/NixOS/nixpkgs";
     nixpkgs.url = "github:prinzdezibel/nixpkgs?ref=master";
     #nixpkgs.url = "github:NixOS/nixpkgs?ref=master";
-
-    moduleDir = {
-      url = "path:./modules";
-      flake = false;
-    };
   };
+
   outputs =
     {
       self,
       nixpkgs,
-      moduleDir,
       ...
     }:
     let
@@ -51,27 +46,21 @@
                 modulesPath,
                 ...
               }:
+              let
+                bootLoader = builtins.readFile ./modules/bootloader.nix;
+                configFile = pkgs.writeText "configuration.nix" ''
+                  {pkgs, ...}: {
+                      imports = [ 
+                        ./modules/base-system.nix
+                        ${bootLoader}
+                        ./modules/hardware-configuration.nix
+                       ];
+                      
+                      system.stateVersion = "${lib.version}";
+                  }
+                '';
+              in
               {
-                imports = [
-                  "${toString modulesPath}/profiles/qemu-guest.nix"
-                ];
-
-                fileSystems."/" = {
-                  device = "/dev/disk/by-label/nixos";
-                  autoResize = true;
-                  fsType = "ext4";
-                };
-
-                boot.growPartition = true;
-                boot.kernelParams = [ "console=ttyS0" ];
-                boot.loader.grub.device =
-                  if (nixpkgs.system == "x86_64-linux") then (lib.mkDefault "/dev/vda") else (lib.mkDefault "nodev");
-
-                boot.loader.grub.efiSupport = lib.mkIf (nixpkgs.system != "x86_64-linux") (lib.mkDefault true);
-                boot.loader.grub.efiInstallAsRemovable = lib.mkIf (nixpkgs.system != "x86_64-linux") (
-                  lib.mkDefault true
-                );
-                boot.loader.timeout = 5;
 
                 system.build.qcow = import "${toString modulesPath}/../lib/make-disk-image.nix" (
                   {
@@ -79,11 +68,7 @@
                     inherit (config.virtualisation) diskSize;
                     format = "qcow2";
                     partitionTableType = "hybrid";
-                    configFile = pkgs.writeText "configuration.nix" ''
-                      {pkgs, ...}: {
-                          imports = [ ./modules ];
-                      }
-                    '';
+
                     contents = [
 
                       # Touch /etc/os-release (needed by activation script)
@@ -92,17 +77,19 @@
                         target = "etc/os-release";
                       }
                       {
-                        source = ./modules/base-system.nix;
-                        #source = "${moduleDir}/base-system.nix";
-                        target = "etc/nixos/modules/base-system.nix";
+                        source = configFile;
+                        target =
+                          if config.system.etc.overlay.enable then
+                            ".rw-etc/upper/nixos/configuration.nix"
+                          else
+                            "etc/nixos/configuration.nix";
+                        mode = "0755";
                       }
                       {
-                        source = "${moduleDir}/cloud-init.nix";
-                        target = "etc/nixos/modules/cloud-init.nix";
-                      }
-                      {
-                        source = "${moduleDir}/default.nix";
-                        target = "etc/nixos/modules/default.nix";
+                        source = ./modules;
+                        target =
+                          if config.system.etc.overlay.enable then ".rw-etc/upper/nixos/modules" else "etc/nixos/modules";
+                        mode = "0755";
                       }
                     ];
                   }
@@ -113,14 +100,10 @@
               }
             )
 
-            #"${moduleDir}/base-system.nix"
             ./modules/base-system.nix
-            #./modules/cloud-init.nix
-            #"${moduleDir}/cloud-init.nix"
-            #"${modulesPath}/profiles/qemu-guest.nix"
-            "${modulesPath}/profiles/perlless.nix"
-            "${modulesPath}/profiles/minimal.nix"
-            #"${modulesPath}/profiles/clone-config.nix"
+            ./modules/bootloader.nix
+            ./modules/hardware-configuration.nix
+            ./modules/cloud-init.nix
           ];
 
           # Supposed way of configuring, but that uses qemu + binfmt?? and is veeerrrrry slow..
@@ -139,30 +122,10 @@
             ldso32 = lib.mkIf (system == "x86_64-linux") null;
           };
 
-          # override useDHCP from qemu-guest.nix
-          networking.useDHCP = false;
-
-          # Perl is a default package and can't be cross-compiled. Remove it.
-          environment.defaultPackages = lib.mkDefault [ ];
+          # This pulls in nixos-containers which depends on Perl.
+          boot.enableContainers = false;
 
           system.stateVersion = lib.version;
-
-          boot.loader = {
-            systemd-boot.enable = true;
-            efi = {
-              canTouchEfiVariables = true;
-            };
-            grub.enable = false;
-          };
-
-          # installer = {
-          #   cloneConfigIncludes = [
-          #     "./modules"
-          #   ];
-          #   cloneConfigExtra = ''
-          #     system.stateVersion = "${lib.version}";
-          #   '';
-          # };
         };
 
       nixosConfigurations = forAllSystems (
