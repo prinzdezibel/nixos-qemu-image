@@ -1,7 +1,7 @@
 {
   inputs = {
-    #nixpkgs.url = "/mnt/home/michael/github/NixOS/nixpkgs";
-    nixpkgs.url = "github:prinzdezibel/nixpkgs?ref=master";
+    nixpkgs.url = "/mnt/home/michael/github/NixOS/nixpkgs";
+    #nixpkgs.url = "github:prinzdezibel/nixpkgs?ref=master";
     #nixpkgs.url = "github:NixOS/nixpkgs?ref=master";
   };
 
@@ -47,13 +47,12 @@
                 ...
               }:
               let
-                bootLoader = builtins.readFile ./modules/bootloader.nix;
+                configuration = builtins.readFile ./modules/configuration.nix;
                 configFile = pkgs.writeText "configuration.nix" ''
                   {pkgs, ...}: {
                       imports = [ 
                         ./modules/base-system.nix
-                        ${bootLoader}
-                        ./modules/hardware-configuration.nix
+                        ${configuration}
                        ];
                       
                       system.stateVersion = "${lib.version}";
@@ -101,8 +100,7 @@
             )
 
             ./modules/base-system.nix
-            ./modules/bootloader.nix
-            ./modules/hardware-configuration.nix
+            ./modules/configuration.nix
             ./modules/cloud-init.nix
           ];
 
