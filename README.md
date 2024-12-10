@@ -94,7 +94,7 @@ nixos-generate-config
 sed -i "s/.\/hardware-configuration.nix/.\/hardware-configuration.nix\n      .\/modules\/base-system.nix\n     .\/modules\/cloud-init.nix/" configuration.nix
     
  echo "Change current EFI-only boot config to Grub-EFI"
- sed -i 's/# Use the systemd-boot EFI boot loader\.// configuration.nix  
+ sed -i 's/# Use the systemd-boot EFI boot loader\.//' configuration.nix
  sed -i 's/boot.loader.systemd-boot.enable = true;/boot.loader.grub = { device = "\/dev\/sda"; enable = true; efiSupport = true; };\nboot.loader.systemd-boot.enable = false;/' configuration.nix
 
 # For whatever reason the /boot filesystem is redundant and errors.
