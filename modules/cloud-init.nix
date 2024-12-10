@@ -11,9 +11,10 @@
         distro: nixos
         #network:
         #  renderers: [ 'networkd' ]
-      users:
-          - default
+      #users:
+      # - default
       ssh_pwauth: false
+      disable_root: false
       chpasswd:
         expire: false
       cloud_init_modules:
