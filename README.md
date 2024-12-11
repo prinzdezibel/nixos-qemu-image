@@ -80,6 +80,10 @@ nix-channel --add https://nixos.org/channels/nixos-24.11 nixos
 nixos-rebuild boot -I nixos-config=/etc/nixos/configuration.nix --upgrade
 ```
 
+## Convert image for usage in cloud environment (tested with Hetzner)
+```
+ qemu-img convert -p -f qcow2 -O host_device nixos.qcow2 /dev/sda
+```
 
 
 ## Change boot loader to GRUB
