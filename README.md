@@ -17,7 +17,7 @@ To cross compile nixos images for other architectures you have to configure boot
 }
 ``` 
 
-Configure QEMU's OVMF firmware in configuration.nix if you intend to run the image on your build machine's QEMU installation:
+Configure QEMU's OVMF firmware in your system's configuration.nix if you intend to run the image on your build machine's QEMU installation:
 ```
 virtualisation.libvirtd = {
     enable = true;
@@ -32,7 +32,7 @@ virtualisation.libvirtd = {
   };
 ```
 
-Specify your machine's architecture in flake.nix:
+Specify your machine's architecture in [flake.nix](https://github.com/prinzdezibel/nixos-qemu-image/blob/a00ae2c4e13207d74f450f1c06d9611ca8bae3a9/flake.nix#L16):
 ```
 buildSystem = "aarch64-linux"; # <-- Change this if you're building on Intel/AMD arch
 ```
