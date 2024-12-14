@@ -42,12 +42,17 @@
   boot.growPartition = true;
   boot.kernelParams = [ "console=ttyS0" ];
 
-  networking.useDHCP = false;
-
   networking.networkmanager = {
       enable = true;
       plugins = lib.mkForce [ pkgs.networkmanager-fortisslvpn ];
   };
+
+  # disable systemd-networkd
+  systemd.network.enable = false;
+  # disable networkd
+  networking.useDHCP = false;
+
+  environment.defaultPackages = with pkgs; [ cacert ];
 
   system = {
     switch = {
