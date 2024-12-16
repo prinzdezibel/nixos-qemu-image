@@ -21,15 +21,14 @@
   services.openssh = {
     enable = true;
     settings.PasswordAuthentication = false;
-    settings.PubkeyAuthentication = true;
     settings.KbdInteractiveAuthentication = false;
-    settings.PermitRootLogin = lib.mkOverride 999 "yes";
-    #settings.PermitRootLogin = lib.mkOverride 999 "prohibit-password";
+    settings.PubkeyAuthentication = true;
+    #settings.PermitRootLogin = lib.mkOverride 999 "yes";
   };
 
   services.qemuGuest.enable = true;
 
-  services.getty.autologinUser = lib.mkOverride 999 "root";
+  #services.getty.autologinUser = lib.mkOverride 999 "root";
 
   nix = {
     settings.experimental-features = [
@@ -60,7 +59,7 @@
       enableNg = true; # switch-to-configuration-ng
     };
 
-    etc.overlay.enable = true;
-    etc.overlay.mutable = true;
+    #etc.overlay.enable = true;
+    #etc.overlay.mutable = true;
   };
 }
