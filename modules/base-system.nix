@@ -43,7 +43,6 @@
 
   networking.networkmanager = {
       enable = true;
-      plugins = lib.mkForce [ pkgs.networkmanager-fortisslvpn ];
   };
 
   # disable systemd-networkd
