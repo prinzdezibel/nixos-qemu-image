@@ -23,7 +23,6 @@
     settings.PasswordAuthentication = false;
     settings.KbdInteractiveAuthentication = false;
     settings.PubkeyAuthentication = true;
-    #settings.PermitRootLogin = lib.mkOverride 999 "yes";
   };
 
   services.qemuGuest.enable = true;
@@ -43,6 +42,7 @@
 
   networking.networkmanager = {
       enable = true;
+      plugins = lib.mkForce [ ]; # Ensure no plugins are used.
   };
 
   # disable systemd-networkd
