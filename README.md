@@ -1,6 +1,6 @@
 # (Cross) compile NixOS QEMU cloud images
 
-This flake allows to cross compile qcow images for QEMU. And of course compiling for the same CPU platform is supported as well. It's basically equivalent to nixos-generators' qow format,
+This flake allows to cross compile qcow images for QEMU. Of course compiling for the same CPU platform is supported as well. It's basically equivalent to nixos-generators' qow format,
 but uses systemd-boot UEFI boot manager and a modified nixpkgs repository that allows make-disk-image to make usage of a fully fledged
 QEMU qemu-system-x86_64 instance with TCG fallback instead of the qemu-kvm package which only supports machines with the same CPU architecture.
 
