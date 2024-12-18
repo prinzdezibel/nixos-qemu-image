@@ -6,6 +6,8 @@ QEMU qemu-system-x86_64 instance with TCG fallback instead of the qemu-kvm packa
 
 The image features cloud-init and is tested with shared and dedicated vCPUs at Hetzner Cloud. Please note that shared vCPUs hosts don't support systemd UEFI boot. For that to work you need to start the image in a dedicated vCPU and then change the bootloader to GRUB. After that you may create a snapshot of the machine which can be used for creating shared vCPU instances. Find more infos on how to do that below.
 
+## Supported platforms
+x86_64-linux and aarch64-linux
 
 ## Steps
 
