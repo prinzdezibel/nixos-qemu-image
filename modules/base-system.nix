@@ -40,17 +40,12 @@
   boot.growPartition = true;
   boot.kernelParams = [ "console=ttyS0" ];
 
-  networking.networkmanager = {
-      enable = true;
-      plugins = lib.mkForce [ ]; # Ensure no plugins are used.
-  };
-
-  # disable systemd-networkd
-  systemd.network.enable = false;
-  # disable networkd
+  # enable systemd-networkd
+  systemd.network.enable = true;
+  # disable dhcpcd
   networking.useDHCP = false;
 
-  environment.defaultPackages = with pkgs; [ cacert ];
+  environment.defaultPackages = with pkgs; [ cacert cloud-init ];
 
   system = {
     switch = {
