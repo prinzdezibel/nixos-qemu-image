@@ -42,6 +42,7 @@
 
   # enable systemd-networkd
   systemd.network.enable = true;
+  networking.useNetworkd = true;
   # disable dhcpcd
   networking.useDHCP = false;
 
