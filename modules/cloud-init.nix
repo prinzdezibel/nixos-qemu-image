@@ -53,6 +53,7 @@
         - final-message
         - power-state-change
 
+      disable_root: false
       chpasswd:
         expire: false
       # syslog_fix_perms: root:root
