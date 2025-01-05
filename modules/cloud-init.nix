@@ -8,7 +8,7 @@
     network.enable = true;
     settings = {
       disable_root = false;
-      preserve_hostname = false;
+      preserve_hostname = true;
     };
 
     config = ''
@@ -19,8 +19,8 @@
         - write-files
         - growpart
         - resizefs
-        - set_hostname
-        - update_hostname
+        # - set_hostname # NixOS links /etc/hostname to read-only fs. cc_set_hostname will fail.
+        # - update_hostname
         # - update_etc_hosts
         - resolv_conf
         - ca-certs

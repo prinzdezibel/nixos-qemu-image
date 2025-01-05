@@ -1,23 +1,14 @@
 # (Cross-) compile NixOS QEMU cloud images
 
-This flake allows to cross compile qcow images for QEMU. Of course compiling for the same CPU platform is supported as well. It's basically equivalent to nixos-generators' qow format,
-but uses systemd-boot UEFI boot manager and a modified nixpkgs repository that allows make-disk-image to make usage of a fully fledged
-QEMU qemu-system-x86_64 instance with TCG fallback instead of the qemu-kvm package which only supports machines with the same CPU architecture.
+This flake allows to cross compile qcow images for QEMU. Of course compiling for the same CPU platform is supported as well. It's basically equivalent to nixos-generators' qow format, but uses systemd-boot UEFI boot manager and a modified nixpkgs repository that allows make-disk-image to make usage of a fully fledged QEMU qemu-system-x86_64 instance with TCG fallback instead of the qemu-kvm package which only supports machines with the same CPU architecture.
 
-The image features cloud-init and is tested with shared and dedicated vCPUs at Hetzner Cloud. Please note that shared vCPUs hosts don't support systemd UEFI boot. For that to work you need to start the image in a dedicated vCPU and then change the bootloader to GRUB. After that you may create a snapshot of the machine which can be used for creating shared vCPU instances. Find more infos on how to do that below.
+The image features cloud-init and is tested with shared and dedicated vCPUs at Hetzner Cloud. Please note that shared vCPUs hosts don't support systemd UEFI boot. For that to work you need to ensure the emulatedUEFI option is set to true (which is the default). This will install the Clover bootloader which is able to emulate UEFI environments on legacy BIOS systems. Once Clover is loaded it will acts as chainloader for regular systemd-boot. If your system is already UEFI enabled, you may set the option emulatedUEFI to false in [flake.nix](https://github.com/prinzdezibel/nixos-qemu-image/blob/d4789fc12b58d0ac8593d961dfe49427d508e7df/flake.nix#L41).
 
 ## Supported platforms
 x86_64-linux and aarch64-linux
 
 ## Steps
 
-To cross compile nixos images for other architectures you have to configure boot.binfmt.emulatedSystems on your host system. For example, if your build machine's CPU architecture is ARM64 (aarch64) put the following snippet into configuration.nix:
-```
-{
-  # Enable binfmt emulation of x86_64-linux.
-  boot.binfmt.emulatedSystems = [ "x86_64-linux" ];
-}
-``` 
 
 Configure QEMU's OVMF firmware in your system's configuration.nix if you intend to run the image on your build machine's QEMU installation:
 ```
@@ -34,7 +25,7 @@ virtualisation.libvirtd = {
   };
 ```
 
-Specify your machine's architecture in [flake.nix](https://github.com/prinzdezibel/nixos-qemu-image/blob/a00ae2c4e13207d74f450f1c06d9611ca8bae3a9/flake.nix#L16):
+Specify your machine's architecture in [flake.nix](https://github.com/prinzdezibel/nixos-qemu-image/blob/d4789fc12b58d0ac8593d961dfe49427d508e7df/flake.nix#L16):
 ```
 buildSystem = "aarch64-linux"; # <-- Change this if you're building on Intel/AMD arch
 ```
@@ -55,7 +46,7 @@ cp result/nixos.qcow2 .
 chmod 755 nixos.qcow2
 ```
 
-ARM: Start qemu image in VM:
+ARM + UEFI: Start qemu image in VM:
 ```
 sudo qemu-system-aarch64 -enable-kvm -machine virt -cpu host -m 4G -smp 2 \
 -drive cache=writeback,file=nixos.qcow2,id=drive1,if=none,index=1,werror=report \
@@ -65,7 +56,7 @@ sudo qemu-system-aarch64 -enable-kvm -machine virt -cpu host -m 4G -smp 2 \
 -nographic
 ```
 
-Intel/AMD: Start qemu image in VM:
+Intel/AMD + UEFI: Start qemu image in VM:
 ```
 sudo qemu-system-x86_64 -enable-kvm -machine q35 -cpu host -m 4G -smp 2 \
 -drive cache=writeback,file=nixos.qcow2,id=drive1,if=none,index=1,werror=report \
@@ -75,6 +66,12 @@ sudo qemu-system-x86_64 -enable-kvm -machine q35 -cpu host -m 4G -smp 2 \
 -nographic
 ```
 
+Intel/AMD + BIOS: Start qemu image in VM:
+```
+sudo qemu-system-x86_64 -machine q35 -m 4G -smp 2 \
+-drive file=nixos.qcow2,werror=report \
+-smbios type=1,serial=ds=nocloud-net
+```
 
 Add channel, update it and rebuild:
 ```
@@ -85,28 +82,4 @@ nixos-rebuild boot -I nixos-config=/etc/nixos/configuration.nix --upgrade
 ## Convert image for usage in cloud environment (tested with Hetzner)
 ```
  qemu-img convert -p -f qcow2 -O host_device nixos.qcow2 /dev/sda
-```
-
-
-## Change boot loader to GRUB
-```
-cd /etc/nixos
-mv configuration.nix configuration.nix.bak
-mv modules/bootloader.nix modules/bootloader.nix.bak
-mv modules/hardware-configuration.nix modules/hardware-configuration.nix.bak
-
-echo "Build new hardware configuration with fileSystem info ..."
-nixos-generate-config
-sed -i "s/.\/hardware-configuration.nix/.\/hardware-configuration.nix\n      .\/modules\/base-system.nix\n     .\/modules\/cloud-init.nix/" configuration.nix
-    
- echo "Change current EFI-only boot config to Grub-EFI"
- sed -i 's/# Use the systemd-boot EFI boot loader\.//' configuration.nix
- sed -i 's/boot.loader.systemd-boot.enable = true;/boot.loader.grub = { device = "\/dev\/sda"; enable = true; efiSupport = true; };\nboot.loader.systemd-boot.enable = false;/' configuration.nix
-
-# For whatever reason the /boot filesystem is redundant and errors.
-# See also: https://github.com/NixOS/nixpkgs/issues/283889
-sed -zi 's/fileSystems."\/boot" =.*{.*}.*;//' hardware-configuration.nix
-               
-echo "Rebuild NixOs ..."
-nixos-rebuild boot -I nixos-config=/etc/nixos/configuration.nix --upgrade
 ```
