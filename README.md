@@ -2,7 +2,7 @@
 
 This flake allows to cross compile qcow images for QEMU. Of course compiling for the same CPU platform is supported as well. It's basically equivalent to nixos-generators' qow format, but uses systemd-boot UEFI boot manager and a modified nixpkgs repository that allows make-disk-image to make usage of a fully fledged QEMU qemu-system-x86_64 instance with TCG fallback instead of the qemu-kvm package which only supports machines with the same CPU architecture.
 
-The image features cloud-init and is tested with shared and dedicated vCPUs at Hetzner Cloud. Please note that shared vCPUs hosts don't support systemd UEFI boot. For that to work you need to ensure the emulatedUEFI option is set to true (which is the default). This will install the Clover bootloader which is able to emulate UEFI environments on legacy BIOS systems. Once Clover is loaded it will acts as chainloader for regular systemd-boot. If your system is already UEFI enabled, you may set the option emulatedUEFI to false in [flake.nix](https://github.com/prinzdezibel/nixos-qemu-image/blob/d4789fc12b58d0ac8593d961dfe49427d508e7df/flake.nix#L41).
+The image features cloud-init and is tested with shared and dedicated vCPUs at Hetzner Cloud. Please note that shared vCPUs hosts don't support systemd UEFI boot. For that to work you need to ensure the emulatedUEFI option is set to true (which is the default). This will install the Clover bootloader which is able to emulate UEFI environments on legacy BIOS systems. Once Clover is loaded it will acts as chainloader for regular systemd-boot. If your system is already UEFI enabled, you may set the option emulatedUEFI to false in [flake.nix](https://github.com/prinzdezibel/nixos-qemu-image/blob/9dde1872fb0bdf8136a022ff7890642ec0056167/flake.nix#L54).
 
 ## Supported platforms
 x86_64-linux and aarch64-linux
@@ -33,7 +33,7 @@ virtualisation.libvirtd = {
   };
 ```
 
-Specify your machine's architecture in [flake.nix](https://github.com/prinzdezibel/nixos-qemu-image/blob/d4789fc12b58d0ac8593d961dfe49427d508e7df/flake.nix#L16):
+Specify your machine's architecture in [flake.nix](https://github.com/prinzdezibel/nixos-qemu-image/blob/9dde1872fb0bdf8136a022ff7890642ec0056167/flake.nix#L16):
 ```
 buildSystem = "aarch64-linux"; # <-- Change this if you're building on Intel/AMD arch
 ```
@@ -138,6 +138,7 @@ and load the emulated binaries through it's dynamic linking loader:
              ''
          );
      })
+ ];
 ```
 
 This overlay results in binfmt to execute a binary with qemu-user that may look similar to this:
