@@ -7,6 +7,7 @@
 }:
 {
   imports = [
+    #"${toString modulesPath}/profiles/perlless.nix"
     "${toString modulesPath}/profiles/qemu-guest.nix"
   ];
 
@@ -42,13 +43,19 @@
 
   # enable systemd-networkd
   systemd.network.enable = true;
+  
+  #systemd.sysusers.enable = true;
+  #services.userborn.enable = false;
+
   networking.useNetworkd = true;
   # disable dhcpcd
   networking.useDHCP = false;
 
   environment.defaultPackages = with pkgs; [ cacert cloud-init ];
-
+ 
   system = {
+     
+
     switch = {
       enable = false;
       enableNg = true; # switch-to-configuration-ng

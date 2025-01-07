@@ -1,7 +1,7 @@
 {
   inputs = {
     #nixpkgs.url = "/mnt/home/michael/github/NixOS/nixpkgs";
-    nixpkgs.url = "github:prinzdezibel/nixpkgs?ref=21a10700f239d6717f016e7f5aecd9a2be52af08";
+    nixpkgs.url = "github:prinzdezibel/nixpkgs?ref=d432ca284c1a78cd9f4d6722e3dc6ab10a53ece6";
     #nixpkgs.url = "github:NixOS/nixpkgs?ref=staging";
   };
 
@@ -20,10 +20,23 @@
         aarch64-linux = "aarch64-multiplatform";
       };
 
+      llvmTripleMatrix = {
+        x86_64-linux = "x86_64-unknown-linux-gnu";
+        aarch64-linux = "aarch64-unknown-linux-gnu";
+      };
+
       forAllSystems =
         function:
         nixpkgs.lib.genAttrs (nixpkgs.lib.attrNames platformConfigMatrix) (
-          system: function nixpkgs.legacyPackages.${system}.pkgsCross.${platformConfigMatrix.${system}}
+          platformConfigMatrixAttr:
+          function {
+            system = platformConfigMatrixAttr;
+            # nixos =
+            #   nixpkgs.legacyPackages.${buildSystem}.pkgsCross.${
+            #     platformConfigMatrix.${platformConfigMatrixAttr}
+            #   }.nixos;
+            nixos = nixpkgs.lib.nixosSystem;
+          }
         );
     in
     {
@@ -45,8 +58,8 @@
                 Emulation of an UEFI environment on legacy BIOS systems. Uses Clover bootloader to chainload systemd-boot.
                 Does only work for x86_64 architecture.
               '';
-            };  
-           };
+            };
+          };
 
           imports = [
             (
@@ -103,7 +116,7 @@
                       }
                     ];
                   }
-                  // lib.optionalAttrs (config.nixpkgs.system != "x86_64-linux") {
+                  // lib.optionalAttrs (pkgs.system != "x86_64-linux") {
                     touchEFIVars = config.boot.loader.efi.canTouchEfiVariables;
                   }
                 );
@@ -116,8 +129,27 @@
           ];
 
           config = {
+            # Build platform
             nixpkgs.system = buildSystem;
-            
+
+            # Target platform
+            nixpkgs.crossSystem = {
+              system = system;
+              config = llvmTripleMatrix.${system};
+            };
+
+            nixpkgs.overlays = [
+              (final: prev: {
+
+              })
+            ];
+
+            environment = {
+              # Prevent cross compile error "Option environment.ldso32 currently only works on x86_64"
+              # Don't support 32 bit.
+              ldso32 = lib.mkIf (pkgs.system == "x86_64-linux") null;
+            };
+
             # This pulls in nixos-containers which depend on Perl.
             boot.enableContainers = false;
 
@@ -126,12 +158,32 @@
         };
 
       nixosConfigurations = forAllSystems (
-        { system, ... }:
-        nixpkgs.lib.nixosSystem {
-          specialArgs = {
-            inherit system;
+        {
+          system,
+          nixos,
+        }:
+        rec {
+          nixosConfigurations = nixos {
+
+            # a) nixpkgs.lib.nixosSystem
+            modules = [ self.nixosModules.images ];
+            specialArgs = {
+              inherit system;
+            };
+
+            # b) nixpkgs.legacyPackages.x86-64-linux.pkgsCross.gnu64.nixos
+            # system = buildSystem;
+            # imports = [
+            #   {
+            #     # Set system as special arguments for all submodules
+            #     _module.args = {
+            #       inherit system;
+            #     };
+            #   }
+            #   self.nixosModules.images
+            # ];
           };
-          modules = [ self.nixosModules.images ];
+          qcow = nixosConfigurations.config.system.build.qcow;
         }
       );
     };

@@ -9,6 +9,14 @@ x86_64-linux and aarch64-linux
 
 ## Steps
 
+To cross compile nixos images for other architectures you have to configure boot.binfmt.emulatedSystems on your host system. For example, if your build machine's CPU architecture is ARM64 (aarch64) put the following snippet into configuration.nix:
+```
+{
+  # Enable binfmt emulation of x86_64-linux.
+  boot.binfmt.emulatedSystems = [ "x86_64-linux" ];
+  nix.settings.extra-platforms = [ "x86_64-linux" ];
+}
+``` 
 
 Configure QEMU's OVMF firmware in your system's configuration.nix if you intend to run the image on your build machine's QEMU installation:
 ```
@@ -32,12 +40,12 @@ buildSystem = "aarch64-linux"; # <-- Change this if you're building on Intel/AMD
 
 Build ARM based qcow image:
 ```
-nix build .#nixosConfigurations.aarch64-linux.config.system.build.qcow
+nix build .#nixosConfigurations.aarch64-linux.qcow
 ```
 
 Build Intel/AMD based qcow image:
 ```
-nix build .#nixosConfigurations.x86_64-linux.config.system.build.qcow
+nix build .#nixosConfigurations.x86_64-linux.qcow
 ```
 
 Copy image to current directory:
@@ -82,4 +90,57 @@ nixos-rebuild boot -I nixos-config=/etc/nixos/configuration.nix --upgrade
 ## Convert image for usage in cloud environment (tested with Hetzner)
 ```
  qemu-img convert -p -f qcow2 -O host_device nixos.qcow2 /dev/sda
+```
+
+## Troubleshooting
+
+In case you see an error similar to this
+```
+qemu-x86_64: /nix/store/razasrvdg7ckplfmvdxv4ia3wbayr94s-bootstrap-tools/bin/bash: Unable to find a guest_base to satisfy all guest address mapping requirements 0000000000000000-0000000000000fff 00000000003ff000-00000000004e22ef
+```
+I believe the reason is that QEMU somehow is not able to figure out where the dynamic linking loader is located. I didn't have luck with specifiying QEMU's 
+QEMU_LD_PREFIX environment variable either. The only thing that fixed the problem for me was to overlay the binfmt binary in the host's configuration.nix
+and load the emulated binaries through it's dynamic linking loader:
+
+```
+ nixpkgs.overlays = [
+     (final: prev: {
+       wrapQemuBinfmtP =
+         name: emulator:
+         prev.wrapQemuBinfmtP name (
+           pkgs.runCommand "${name}-arg-wrapper"
+             {
+               nativeBuildInputs = [ final.pkgs.makeWrapper ];
+             }
+             ''
+                makeWrapper ${emulator} $out --run '
+                   MODARGS=()
+                   DASH_DASH_SEEN=0
+
+                   for ARG in "$@"; do
+                    if [[ "$ARG" =~ (/nix/store/.*-bootstrap-tools/)bin/ ]]; then
+                      TOOLSROOT=''${BASH_REMATCH[1]}
+                      DYNAMIC_LOADER = $(ls -la $TOOLSROOT | grep -ioe 'ld-linux-.*$')
+                      MODARGS+=("''${TOOLSROOT}/lib/''${DYNAMIC_LOADER}")
+                    fi
+
+                    if [[ $SEEDASH_DASH_SEEN == 1 ]]; then
+                      MODARGS+=("$ARG")  
+                    fi
+                    if [[ "$ARG" == "--" ]]; then
+                      DASH_DASH_SEEN=1
+                    fi
+                   done
+
+                   set -- "''${MODARGS[@]}"
+              '
+
+             ''
+         );
+     })
+```
+
+This overlay results in binfmt to execute a binary with qemu-user that may look similar to this:
+```
+/nix/store/34ph3573s5lz3swl5g1mf32z3ca981wf-qemu-user-9.1.2/bin/qemu-x86_64 /nix/store/razasrvdg7ckplfmvdxv4ia3wbayr94s-bootstrap-tools/lib/ld-linux-x86-64.so.2 /nix/store/razasrvdg7ckplfmvdxv4ia3wbayr94s-bootstrap-tools/bin/stat --printf %y ./configure
 ```

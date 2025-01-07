@@ -47,7 +47,10 @@ in
         cp -R /tmp/iso/efi/clover /boot/EFI/
 
         cp /boot/EFI/CLOVER/cloverx64.efi /boot/EFI/BOOT/BOOTX64.EFI
-        
+
+        cp /tmp/iso/efi/clover/drivers/off/UEFI/VirtioBlkDxe.efi /boot/EFI/CLOVER/drivers/bios/VirtioBlkDxe.efi
+        cp /tmp/iso/efi/clover/drivers/off/UEFI/VirtioBlkDxe.efi /boot/EFI/CLOVER/drivers/uefi/VirtioBlkDxe.efi
+                
         # Chainload systemd-boot
         cat <<-EOF > /boot/EFI/CLOVER/config.plist
         <?xml version="1.0" encoding="UTF-8"?>
@@ -70,7 +73,7 @@ in
             <key>GUI</key>
             <dict>
               <key>TextOnly</key>
-              <true/>
+              <false/>
               <key>Custom</key>
               <dict>
                 <key>Entries</key>
