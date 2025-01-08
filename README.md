@@ -100,7 +100,7 @@ qemu-x86_64: /nix/store/razasrvdg7ckplfmvdxv4ia3wbayr94s-bootstrap-tools/bin/bas
 ```
 I believe the reason is that QEMU somehow is not able to figure out where the dynamic linking loader is located that is needed in early bootstrap phase. I didn't have luck with specifiying QEMU's 
 QEMU_LD_PREFIX environment variable either. The only thing that fixed the problem for me was to overlay the binfmt binary in the host's configuration.nix
-and load the emulated binaries through its dynamic linking loader:
+and load the emulated binaries through the correct bootstrap loader:
 
 ```
  nixpkgs.overlays = [
@@ -184,9 +184,7 @@ and load the emulated binaries through its dynamic linking loader:
                     fi
 
                   done
-                  set +x
                   set -- "''${MODARGS[@]}"
-                  set -x
               '
 
              ''
