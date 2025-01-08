@@ -126,15 +126,13 @@ and load the emulated binaries through its dynamic linking loader:
                          echo Files: ''${FILES[@]}
                          exit 1
                       fi
-                      for FILENAME in "''${FILES[@]}"; do
-                        if [[ "$DYNAMIC_LOADER_SET" == 0 ]]; then
-                            MODARGS+=(-E)
-                            MODARGS+=("LD_LIBRARY_PATH=$LD_LIBRARY_PATH:''${TOOLSROOT}")
-                            MODARGS+=(''${FILENAME})
-                            DYNAMIC_LOADER_SET=1
-                        fi
-                        break
-                      done
+                      FILENAME=''${FILES[0]}
+                      if [[ "$DYNAMIC_LOADER_SET" == 0 ]]; then
+                          MODARGS+=(-E)
+                          MODARGS+=("LD_LIBRARY_PATH=$LD_LIBRARY_PATH:''${TOOLSROOT}")
+                          MODARGS+=(''${FILENAME})
+                          DYNAMIC_LOADER_SET=1
+                      fi
                   }
 
                   for ARG in "$@"; do
