@@ -98,9 +98,9 @@ In case you see an error similar to this
 ```
 qemu-x86_64: /nix/store/razasrvdg7ckplfmvdxv4ia3wbayr94s-bootstrap-tools/bin/bash: Unable to find a guest_base to satisfy all guest address mapping requirements 0000000000000000-0000000000000fff 00000000003ff000-00000000004e22ef
 ```
-I believe the reason is that QEMU somehow is not able to figure out where the  dynamic linking loader is located that is needed in early bootstrap phase. I didn't have luck with specifiying QEMU's 
+I believe the reason is that QEMU somehow is not able to figure out where the dynamic linking loader is located that is needed in early bootstrap phase. I didn't have luck with specifiying QEMU's 
 QEMU_LD_PREFIX environment variable either. The only thing that fixed the problem for me was to overlay the binfmt binary in the host's configuration.nix
-and load the emulated binaries through it's dynamic linking loader:
+and load the emulated binaries through its dynamic linking loader:
 
 ```
  nixpkgs.overlays = [
@@ -121,8 +121,9 @@ and load the emulated binaries through it's dynamic linking loader:
                   function set_dynamic_loader {
                       TOOLSROOT=$1
                       FILES=(''${TOOLSROOT}lib/ld-linux-*)
-                      if [[ ''${#FILES[@]} ]]; then
+                      if [[ ''${#FILES[@]} != 1 ]]; then
                          echo "Number of files needs to be exactly one!"
+                         echo Files: ''${FILES[@]}
                          exit 1
                       fi
                       for FILENAME in "''${FILES[@]}"; do
