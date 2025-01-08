@@ -115,6 +115,7 @@ and load the emulated binaries through its dynamic linking loader:
              ''
                 makeWrapper ${emulator} $out --run ' 
                   MODARGS=() 
+                   
                   DASH_DASH_SEEN=0
                   DYNAMIC_LOADER_SET=0
 
@@ -164,6 +165,17 @@ and load the emulated binaries through its dynamic linking loader:
                         done < ''${BASH_REMATCH[1]}bin/gcc
                     fi
 
+                    if [[ "$ARG" =~ (/nix/store/.*-bootstrap-stage-xgcc-gcc-wrapper-/)bin/ ]]; then
+                        # Read ld script with only shell builtins to examine the TOOLSROOT directory
+                        while IFS= read -r line; do
+                          if [[ "$line" =~ /nix/store/.*-bootstrap-tools/ ]]; then
+                            TOOLSROOT=''${BASH_REMATCH[0]}
+                            set_dynamic_loader $TOOLSROOT
+                            break
+                          fi
+                        done < ''${BASH_REMATCH[1]}bin/cpp
+                    fi
+
                     if [[ $DASH_DASH_SEEN == 1 ]]; then
                       MODARGS+=("$ARG")  
                     fi
@@ -172,7 +184,9 @@ and load the emulated binaries through its dynamic linking loader:
                     fi
 
                   done
+                  set +x
                   set -- "''${MODARGS[@]}"
+                  set -x
               '
 
              ''
