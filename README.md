@@ -98,7 +98,7 @@ In case you see an error similar to this
 ```
 qemu-x86_64: /nix/store/razasrvdg7ckplfmvdxv4ia3wbayr94s-bootstrap-tools/bin/bash: Unable to find a guest_base to satisfy all guest address mapping requirements 0000000000000000-0000000000000fff 00000000003ff000-00000000004e22ef
 ```
-I believe the reason is that QEMU somehow is not able to figure out where the dynamic linking loader is located. I didn't have luck with specifiying QEMU's 
+I believe the reason is that QEMU somehow is not able to figure out where the  dynamic linking loader is located that is needed in early bootstrap phase. I didn't have luck with specifiying QEMU's 
 QEMU_LD_PREFIX environment variable either. The only thing that fixed the problem for me was to overlay the binfmt binary in the host's configuration.nix
 and load the emulated binaries through it's dynamic linking loader:
 
@@ -112,27 +112,59 @@ and load the emulated binaries through it's dynamic linking loader:
              {
                nativeBuildInputs = [ final.pkgs.makeWrapper ];
              }
-             ''
-                makeWrapper ${emulator} $out --run '
-                   MODARGS=()
-                   DASH_DASH_SEEN=0
+               ''
+                makeWrapper ${emulator} $out --run ' 
+                  #set -x
+                  #MODARGS=(-E "LD_LIBRARY_PATH=/nix/store/razasrvdg7ckplfmvdxv4ia3wbayr94s-bootstrap-tools" /nix/store/razasrvdg7ckplfmvdxv4ia3wbayr94s-bootstrap-tools/lib/ld-linux-x86-64.so.2)
+                  MODARGS=() 
+                   
+                  DASH_DASH_SEEN=0
+                  DYNAMIC_LOADER_SET=0
 
-                   for ARG in "$@"; do
+                  for ARG in "$@"; do
+                    
                     if [[ "$ARG" =~ (/nix/store/.*-bootstrap-tools/)bin/ ]]; then
                       TOOLSROOT=''${BASH_REMATCH[1]}
-                      DYNAMIC_LOADER = $(ls -la $TOOLSROOT | grep -ioe 'ld-linux-.*$')
-                      MODARGS+=("''${TOOLSROOT}/lib/''${DYNAMIC_LOADER}")
+                      
+                      for FILENAME in ''${TOOLSROOT}lib/ld-linux-*; do
+                        if [[ "$DYNAMIC_LOADER_SET" == 0 ]]; then
+                            MODARGS+=(-E)
+                            MODARGS+=("LD_LIBRARY_PATH=$LD_LIBRARY_PATH:''${TOOLSROOT}")
+                            MODARGS+=(''${FILENAME})
+                            DYNAMIC_LOADER_SET=1
+                        fi
+                        break
+                      done
                     fi
 
-                    if [[ $SEEDASH_DASH_SEEN == 1 ]]; then
+                    if [[ "$ARG" =~ (/nix/store/.*-bootstrap-stage0-binutils-wrapper-/)bin/ ]]; then
+                      ROOT=''${BASH_REMATCH[1]}
+                      CMD="''${ROOT}bin/readelf -p .interp ''${ROOT}bin/readelf"
+                      for LINE in "$($CMD)"; do
+                        if [[ "$LINE" =~ (/nix/store/.*-bootstrap-tools/)lib/ld-linux-* ]]; then
+                            FILENAME=''${BASH_REMATCH[0]}
+                            TOOLSROOT=''${BASH_REMATCH[1]}
+                            if [[ "$DYNAMIC_LOADER_SET" == 0 ]]; then
+                              MODARGS+=(-E)
+                              MODARGS+=("LD_LIBRARY_PATH=$LD_LIBRARY_PATH:''${TOOLSROOT}")
+                              MODARGS+=(''${FILENAME})
+                              DYNAMIC_LOADER_SET=1
+                            fi
+                          break
+                        fi
+                      done
+                    fi
+                   
+                    if [[ $DASH_DASH_SEEN == 1 ]]; then
                       MODARGS+=("$ARG")  
                     fi
                     if [[ "$ARG" == "--" ]]; then
                       DASH_DASH_SEEN=1
                     fi
-                   done
 
-                   set -- "''${MODARGS[@]}"
+                  done
+
+                  set -- "''${MODARGS[@]}"
               '
 
              ''
