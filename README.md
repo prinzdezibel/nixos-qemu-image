@@ -112,60 +112,52 @@ and load the emulated binaries through it's dynamic linking loader:
              {
                nativeBuildInputs = [ final.pkgs.makeWrapper ];
              }
-               ''
-                makeWrapper ${emulator} $out --run ' 
-                  #set -x
-                  #MODARGS=(-E "LD_LIBRARY_PATH=/nix/store/razasrvdg7ckplfmvdxv4ia3wbayr94s-bootstrap-tools" /nix/store/razasrvdg7ckplfmvdxv4ia3wbayr94s-bootstrap-tools/lib/ld-linux-x86-64.so.2)
-                  MODARGS=() 
+             ''
+               makeWrapper ${emulator} $out --run ' 
+                 #set -x
+                 #MODARGS=(-E "LD_LIBRARY_PATH=/nix/store/razasrvdg7ckplfmvdxv4ia3wbayr94s-bootstrap-tools" /nix/store/razasrvdg7ckplfmvdxv4ia3wbayr94s-bootstrap-tools/lib/ld-linux-x86-64.so.2)
+                 MODARGS=() 
+                  
+                 DASH_DASH_SEEN=0
+                 DYNAMIC_LOADER_SET=0
+                 function set_dynamic_loader {
+                     TOOLSROOT=$1
+                     for FILENAME in ''${TOOLSROOT}lib/ld-linux-*; do
+                       if [[ "$DYNAMIC_LOADER_SET" == 0 ]]; then
+                           MODARGS+=(-E)
+                           MODARGS+=("LD_LIBRARY_PATH=$LD_LIBRARY_PATH:''${TOOLSROOT}")
+                           MODARGS+=(''${FILENAME})
+                           DYNAMIC_LOADER_SET=1
+                       fi
+                       break
+                     done
+                 }
+                 for ARG in "$@"; do
                    
-                  DASH_DASH_SEEN=0
-                  DYNAMIC_LOADER_SET=0
-
-                  for ARG in "$@"; do
-                    
-                    if [[ "$ARG" =~ (/nix/store/.*-bootstrap-tools/)bin/ ]]; then
-                      TOOLSROOT=''${BASH_REMATCH[1]}
-                      
-                      for FILENAME in ''${TOOLSROOT}lib/ld-linux-*; do
-                        if [[ "$DYNAMIC_LOADER_SET" == 0 ]]; then
-                            MODARGS+=(-E)
-                            MODARGS+=("LD_LIBRARY_PATH=$LD_LIBRARY_PATH:''${TOOLSROOT}")
-                            MODARGS+=(''${FILENAME})
-                            DYNAMIC_LOADER_SET=1
-                        fi
-                        break
-                      done
-                    fi
-
-                    if [[ "$ARG" =~ (/nix/store/.*-bootstrap-stage0-binutils-wrapper-/)bin/ ]]; then
-                      ROOT=''${BASH_REMATCH[1]}
-                      CMD="''${ROOT}bin/readelf -p .interp ''${ROOT}bin/readelf"
-                      for LINE in "$($CMD)"; do
-                        if [[ "$LINE" =~ (/nix/store/.*-bootstrap-tools/)lib/ld-linux-* ]]; then
-                            FILENAME=''${BASH_REMATCH[0]}
-                            TOOLSROOT=''${BASH_REMATCH[1]}
-                            if [[ "$DYNAMIC_LOADER_SET" == 0 ]]; then
-                              MODARGS+=(-E)
-                              MODARGS+=("LD_LIBRARY_PATH=$LD_LIBRARY_PATH:''${TOOLSROOT}")
-                              MODARGS+=(''${FILENAME})
-                              DYNAMIC_LOADER_SET=1
-                            fi
-                          break
-                        fi
-                      done
-                    fi
-                   
-                    if [[ $DASH_DASH_SEEN == 1 ]]; then
-                      MODARGS+=("$ARG")  
-                    fi
-                    if [[ "$ARG" == "--" ]]; then
-                      DASH_DASH_SEEN=1
-                    fi
-
-                  done
-
-                  set -- "''${MODARGS[@]}"
-              '
+                   if [[ "$ARG" =~ (/nix/store/.*-bootstrap-tools/)bin/ ]]; then
+                     TOOLSROOT=''${BASH_REMATCH[1]}
+                     set_dynamic_loader $TOOLSROOT
+                   fi
+                   if [[ "$ARG" =~ (/nix/store/.*-bootstrap-stage0-binutils-wrapper-/)bin/ ]]; then
+                       # Read ld script with only shell builtins to examine the TOOLSROOT directory
+                       while IFS= read -r line; do
+                         if [[ "$line" =~ (/nix/store/.*-bootstrap-tools/)bin/ld ]]; then
+                           TOOLSROOT=''${BASH_REMATCH[1]}
+                           set_dynamic_loader $TOOLSROOT
+                           break
+                         fi
+                       done < ''${BASH_REMATCH[1]}bin/ld
+                   fi
+                  
+                   if [[ $DASH_DASH_SEEN == 1 ]]; then
+                     MODARGS+=("$ARG")  
+                   fi
+                   if [[ "$ARG" == "--" ]]; then
+                     DASH_DASH_SEEN=1
+                   fi
+                 done
+                 set -- "''${MODARGS[@]}"
+             '
 
              ''
          );
