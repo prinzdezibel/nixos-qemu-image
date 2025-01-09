@@ -1,8 +1,11 @@
 { pkgs, config, lib, ... }:
 let
   cloverCompressed = pkgs.fetchurl {
-    url = "https://github.com/CloverHackyColor/CloverBootloader/releases/download/5161/Clover-5161-X64.iso.7z";
-    hash = "sha256-CL3F87T0b+ReAkPIZYDAfRSGsxEKzlHjrHVACHiu1ks=";
+    # url = "https://github.com/CloverHackyColor/CloverBootloader/releases/download/5161/Clover-5161-X64.iso.7z";
+    # hash = "sha256-CL3F87T0b+ReAkPIZYDAfRSGsxEKzlHjrHVACHiu1ks=";
+    # We need a custom Clover bootloader that can cope with virtio-blk devices
+    url = "https://github.com/prinzdezibel/CloverBootloader/releases/download/5161%2Bvirtio.1/CloverISO-5161.tar.lzma";
+    hash = "sha256-KOTjOodKf6Wd9B+IgHGLbkLswClUkMU+wXPqdJy7Um0=";
   };
 in
 {
@@ -23,6 +26,8 @@ in
         echo "Install CloverBootloader..." 
 
         ${pkgs.p7zip}/bin/7z e ${cloverCompressed} -o/tmp
+        TAR=$(ls -a /tmp | grep -ie 'CloverISO-.*tar$')
+        ${pkgs.gnutar}/bin/tar -xvf /tmp/$TAR -C /tmp --strip-components=1
         
         IMAGE=$(ls -a /tmp | grep -ie '^Clover-.*-X64.iso$')
         DEVICE=$(losetup -f)
@@ -40,16 +45,18 @@ in
         dd if=/tmp/original_PBR of=/tmp/new_PBR skip=3 seek=3 bs=1 count=87 conv=notrunc
         dd if=/tmp/new_PBR of=/dev/vda1 bs=512 count=1
         
-        # Copy the legacy bootloader to the EFI system partition:
-        cp /tmp/iso/usr/standalone/i386/x64/boot6 /boot/boot
+        # Copy the legacy bootloader to the EFI system partition. It's responsible for loading our final Clover efi (cloverx64.efi)
+        # boot7: Clover 64-bit with BiosBlockIO driver that works with any controller supported by the BIOS.
+        cp /tmp/iso/usr/standalone/i386/x64/boot7 /boot/boot
 
         # Copy Clover EFI files
         cp -R /tmp/iso/efi/clover /boot/EFI/
 
         cp /boot/EFI/CLOVER/cloverx64.efi /boot/EFI/BOOT/BOOTX64.EFI
 
-        cp /tmp/iso/efi/clover/drivers/off/UEFI/VirtioBlkDxe.efi /boot/EFI/CLOVER/drivers/bios/VirtioBlkDxe.efi
-        cp /tmp/iso/efi/clover/drivers/off/UEFI/VirtioBlkDxe.efi /boot/EFI/CLOVER/drivers/uefi/VirtioBlkDxe.efi
+        #find /tmp/iso
+        cp /tmp/iso/efi/clover/drivers/off/virtioblkdxe.efi /boot/EFI/CLOVER/drivers/uefi/VirtioBlkDxe.efi
+        cp /tmp/iso/efi/clover/drivers/off/virtiofsdxe.efi /boot/EFI/CLOVER/drivers/uefi/VirtioFsDxe.efi
                 
         # Chainload systemd-boot
         cat <<-EOF > /boot/EFI/CLOVER/config.plist
@@ -66,9 +73,9 @@ in
               <key>DefaultLoader</key>
               <string>\EFI\systemd\systemd-bootx64.efi</string>
             	<key>Fast</key>
-		          <false/>
+		          <true/>
               <key>Debug</key>
-              <true/>
+              <false/>
             </dict>
             <key>GUI</key>
             <dict>
@@ -122,9 +129,8 @@ EOF
     #grub.device = "/dev/vda"; # when using GRUB in a BIOS/GPT setup
     ##grub.device = "nodev"; # when using UEFI-enabled system.
     #
-    ### GRUB should load from ESP, even if system is not natively UEFI-enabled and GRUB is using a BIOS/GPT setup
+    # GRUB should load from ESP, even if system is not natively UEFI-enabled and GRUB is using a BIOS/GPT setup
     #grub.efiSupport = true;
     #grub.efiInstallAsRemovable = if pkgs.system != "x86_64-linux" then false else true; # in case canTouchEfiVariables doesn't work for your system. Check with efibootmgr. See https://docs.hetzner.com/robot/dedicated-server/operating-systems/uefi/#using-efibootmgr
-
   };
 }
