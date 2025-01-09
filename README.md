@@ -1,6 +1,6 @@
 # (Cross-) compile NixOS cloud images
 
-This flake allows to cross compile qcow images. The qcow image format can be directly used for QEMU, but it is also possible to convert it to a native host device format and write it directly to your cloud providers hard disk. See [here](https://github.com/prinzdezibel/nixos-qemu-image?tab=readme-ov-file#convert-image-for-usage-in-cloud-environment-tested-with-hetzner) for an example. Of course compiling for the same CPU platform is supported as well. It's basically equivalent to nixos-generators' qow format, but uses systemd-boot UEFI boot manager and a modified nixpkgs repository that allows make-disk-image to make usage of a fully fledged QEMU qemu-system-x86_64 instance with TCG fallback instead of the qemu-kvm package which only supports machines with the same CPU architecture.
+This flake allows to cross compile qcow images. The qcow image format can be directly used for QEMU, but it is also possible to convert it to a native host device format and write it directly to your cloud provider's hard disk. See [here](https://github.com/prinzdezibel/nixos-qemu-image?tab=readme-ov-file#convert-image-for-usage-in-cloud-environment-tested-with-hetzner) for an example. Of course compiling for the same CPU platform is supported as well. It's basically equivalent to nixos-generators' qow format, but uses systemd-boot UEFI boot manager and a modified nixpkgs repository that allows make-disk-image to make usage of a fully fledged QEMU qemu-system-x86_64 instance with TCG fallback instead of the qemu-kvm package which only supports machines with the same CPU architecture.
 
 The image features cloud-init and is tested with shared and dedicated vCPUs at Hetzner Cloud. Please note that shared vCPUs hosts don't support systemd UEFI boot. For that to work you need to ensure the emulatedUEFI option is set to true (which is the default). This will install the Clover bootloader which is able to emulate UEFI environments on legacy BIOS systems. Once Clover is loaded it will acts as chainloader for regular systemd-boot. If your system is already UEFI enabled, you may set the option emulatedUEFI to false in [flake.nix](https://github.com/prinzdezibel/nixos-qemu-image/blob/9dde1872fb0bdf8136a022ff7890642ec0056167/flake.nix#L54).
 
@@ -113,7 +113,7 @@ and load the emulated binaries through the correct bootstrap loader:
                nativeBuildInputs = [ final.pkgs.makeWrapper ];
              }
              ''
-                makeWrapper ${emulator} $out --run ' 
+                makeWrapper ${emulator} $out --run '
                   MODARGS=() 
                    
                   DASH_DASH_SEEN=0
@@ -137,9 +137,10 @@ and load the emulated binaries through the correct bootstrap loader:
                   }
 
                   for ARG in "$@"; do
-                    
-                    if [[ "$ARG" =~ (/nix/store/.*-bootstrap-tools/)bin/ ]]; then
-                      TOOLSROOT=''${BASH_REMATCH[1]}
+
+                    # THIS MUST NOT BE MATCHED: > + exec /nix/store/34ph3573s5lz3swl5g1mf32z3ca981wf-qemu-user-9.1.2/bin/qemu-x86_64 ./miniperl -Ilib make_ext.pl cpan/Archive-Tar/pm_to_blib MAKE=/nix/store/razasrvdg7ckplfmvdxv4ia3wbayr94s-bootstrap-tools/bin/make LIBPERL_A=libperl.so
+                    if [[ "$ARG" =~ ([^=]|^)(/nix/store/.*-bootstrap-tools/)bin/ ]]; then
+                      TOOLSROOT=''${BASH_REMATCH[2]}
                       set_dynamic_loader $TOOLSROOT
                     fi
 
@@ -184,6 +185,7 @@ and load the emulated binaries through the correct bootstrap loader:
                     fi
 
                   done
+                 
                   set -- "''${MODARGS[@]}"
               '
 

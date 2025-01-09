@@ -1,7 +1,7 @@
 {
   inputs = {
     #nixpkgs.url = "/mnt/home/michael/github/NixOS/nixpkgs";
-    nixpkgs.url = "github:prinzdezibel/nixpkgs?ref=d432ca284c1a78cd9f4d6722e3dc6ab10a53ece6";
+    nixpkgs.url = "github:prinzdezibel/nixpkgs?ref=d0da7daf0ecc03be5acad2d0340d967530c97ca3";
     #nixpkgs.url = "github:NixOS/nixpkgs?ref=staging";
   };
 
