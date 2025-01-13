@@ -7,7 +7,6 @@
 }:
 {
   imports = [
-    #"${toString modulesPath}/profiles/perlless.nix"
     "${toString modulesPath}/profiles/qemu-guest.nix"
   ];
 

@@ -4,8 +4,8 @@ let
     # url = "https://github.com/CloverHackyColor/CloverBootloader/releases/download/5161/Clover-5161-X64.iso.7z";
     # hash = "sha256-CL3F87T0b+ReAkPIZYDAfRSGsxEKzlHjrHVACHiu1ks=";
     # We need a custom Clover bootloader that can cope with virtio-blk devices
-    url = "https://github.com/prinzdezibel/CloverBootloader/releases/download/5161%2Bvirtio.1/CloverISO-5161.tar.lzma";
-    hash = "sha256-KOTjOodKf6Wd9B+IgHGLbkLswClUkMU+wXPqdJy7Um0=";
+    url = "https://github.com/prinzdezibel/CloverBootloader/releases/download/5161%2Bvirtio.2/CloverISO-5161+virtio.2.tar.lzma";
+    hash = "sha256-n+hT2HruODVRuDwPpoFpNXN7j0oBJG5rUjBZrqFhnLU="; 
   };
 in
 {
@@ -16,7 +16,7 @@ in
   };
 
   boot.loader = {
-    timeout = 5;
+    timeout = 4;
     systemd-boot = {
       enable = true;
       configurationLimit = 5;
@@ -45,7 +45,6 @@ in
         dd if=/tmp/original_PBR of=/tmp/new_PBR skip=3 seek=3 bs=1 count=87 conv=notrunc
         dd if=/tmp/new_PBR of=/dev/vda1 bs=512 count=1
         
-        # Copy the legacy bootloader to the EFI system partition. It's responsible for loading our final Clover efi (cloverx64.efi)
         # boot7: Clover 64-bit with BiosBlockIO driver that works with any controller supported by the BIOS.
         cp /tmp/iso/usr/standalone/i386/x64/boot7 /boot/boot
 
@@ -54,9 +53,10 @@ in
 
         cp /boot/EFI/CLOVER/cloverx64.efi /boot/EFI/BOOT/BOOTX64.EFI
 
-        #find /tmp/iso
         cp /tmp/iso/efi/clover/drivers/off/virtioblkdxe.efi /boot/EFI/CLOVER/drivers/uefi/VirtioBlkDxe.efi
         cp /tmp/iso/efi/clover/drivers/off/virtiofsdxe.efi /boot/EFI/CLOVER/drivers/uefi/VirtioFsDxe.efi
+        cp /tmp/iso/efi/clover/drivers/off/virtioblkdxe.efi /boot/EFI/CLOVER/drivers/bios/VirtioBlkDxe.efi
+        cp /tmp/iso/efi/clover/drivers/off/virtiofsdxe.efi /boot/EFI/CLOVER/drivers/bios/VirtioFsDxe.efi
                 
         # Chainload systemd-boot
         cat <<-EOF > /boot/EFI/CLOVER/config.plist
@@ -64,6 +64,11 @@ in
         <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "https://www.apple.com/DTDs/PropertyList-1.0.dtd">
         <plist version="1.0">
           <dict>
+            <key>CPU</key>
+            <dict>
+              <key>QEMU</key>
+              <true/>
+            </dict>
             <key>Boot</key>
             <dict>
               <key>Timeout</key>
@@ -72,7 +77,7 @@ in
               <string>FirstAvailable</string>
               <key>DefaultLoader</key>
               <string>\EFI\systemd\systemd-bootx64.efi</string>
-            	<key>Fast</key>
+              <key>Fast</key>
 		          <true/>
               <key>Debug</key>
               <false/>
@@ -104,7 +109,7 @@ in
                 </array>
               </dict>
             </dict>
-          </dict>
+	        </dict>
         </plist>
 EOF
 
@@ -119,7 +124,6 @@ EOF
       '';
     };
     efi = {
-      # Set true if system is UEFI-enabled. Conflicts with grub.efiInstallAsRemovable = true
       canTouchEfiVariables = if pkgs.system != "x86_64-linux" then true else false;
     };
 

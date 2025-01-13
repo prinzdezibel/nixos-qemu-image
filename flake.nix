@@ -115,8 +115,7 @@
                         mode = "0755";
                       }
                     ];
-                  }
-                  // lib.optionalAttrs (pkgs.system != "x86_64-linux") {
+
                     touchEFIVars = config.boot.loader.efi.canTouchEfiVariables;
                   }
                 );
