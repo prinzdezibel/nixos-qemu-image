@@ -27,7 +27,7 @@
 
   services.qemuGuest.enable = true;
 
-  #services.getty.autologinUser = lib.mkOverride 999 "root";
+  services.getty.autologinUser = lib.mkOverride 999 "root";
 
   nix = {
     settings.experimental-features = [
@@ -38,6 +38,7 @@
 
   boot.initrd.systemd.enable = true;
   boot.growPartition = true;
+
   boot.kernelParams = [ "console=ttyS0" ];
 
   # enable systemd-networkd
@@ -50,6 +51,7 @@
   # disable dhcpcd
   networking.useDHCP = false;
 
+  # efibootmgr efivar
   environment.defaultPackages = with pkgs; [ cacert cloud-init ];
  
   system = {

@@ -16,8 +16,10 @@ in
   };
 
   boot.loader = {
-    timeout = 4;
+    timeout = 5; # systemd-boot menu
     systemd-boot = {
+      edk2-uefi-shell.enable = false;
+      editor = false;
       enable = true;
       configurationLimit = 5;
       extraInstallCommands = lib.mkIf (config.emulatedUEFI && pkgs.system == "x86_64-linux") ''
@@ -72,13 +74,13 @@ in
             <key>Boot</key>
             <dict>
               <key>Timeout</key>
-              <integer>4</integer>
+              <integer>5</integer>
               <key>DefaultVolume</key>
               <string>FirstAvailable</string>
               <key>DefaultLoader</key>
               <string>\EFI\systemd\systemd-bootx64.efi</string>
               <key>Fast</key>
-		          <true/>
+		          <false/>
               <key>Debug</key>
               <false/>
             </dict>
@@ -121,6 +123,10 @@ EOF
         echo "Setting the active flag on the protective MBR partition..."
         ${pkgs.util-linux}/bin/sfdisk --activate /dev/vda 1 --force
         ${pkgs.parted}/bin/partprobe
+
+        # Couldn't get timeout to work without disable menu entirely.
+        sed -i 's/timeout.*//' /boot/loader/loader.conf
+
       '';
     };
     efi = {
