@@ -4,8 +4,10 @@ let
     # url = "https://github.com/CloverHackyColor/CloverBootloader/releases/download/5161/Clover-5161-X64.iso.7z";
     # hash = "sha256-CL3F87T0b+ReAkPIZYDAfRSGsxEKzlHjrHVACHiu1ks=";
     # We need a custom Clover bootloader that can cope with virtio-blk devices
-    url = "https://github.com/prinzdezibel/CloverBootloader/releases/download/5161%2Bvirtio.2/CloverISO-5161+virtio.2.tar.lzma";
-    hash = "sha256-n+hT2HruODVRuDwPpoFpNXN7j0oBJG5rUjBZrqFhnLU="; 
+    # url = "http://localhost:8080/CloverISO-5161+virtio.4.tar.lzma";
+    # hash = "sha256-dDD2wI7vqOT5Cac0SGvlt4qVsp2w7YYiIV0XCKXMIeQ=";
+    url = "https://github.com/prinzdezibel/CloverBootloader/releases/download/5161%2Bvirtio.5/CloverISO-5161+virtio.5.tar.lzma";
+    hash = "sha256-tgwkTcekj/1FqB+/IhS/4KogDKi2zBGwzenbohL2JDI=";
   };
 in
 {
@@ -19,6 +21,8 @@ in
     timeout = 4;
     systemd-boot = {
       enable = true;
+      #edk2-uefi-shell.enable = false;
+      #editor = false;
       configurationLimit = 5;
       extraInstallCommands = lib.mkIf (config.emulatedUEFI && pkgs.system == "x86_64-linux") ''
         set -euo pipefail
@@ -53,11 +57,13 @@ in
 
         cp /boot/EFI/CLOVER/cloverx64.efi /boot/EFI/BOOT/BOOTX64.EFI
 
-        cp /tmp/iso/efi/clover/drivers/off/virtioblkdxe.efi /boot/EFI/CLOVER/drivers/uefi/VirtioBlkDxe.efi
         cp /tmp/iso/efi/clover/drivers/off/virtiofsdxe.efi /boot/EFI/CLOVER/drivers/uefi/VirtioFsDxe.efi
-        cp /tmp/iso/efi/clover/drivers/off/virtioblkdxe.efi /boot/EFI/CLOVER/drivers/bios/VirtioBlkDxe.efi
         cp /tmp/iso/efi/clover/drivers/off/virtiofsdxe.efi /boot/EFI/CLOVER/drivers/bios/VirtioFsDxe.efi
-                
+        cp /tmp/iso/efi/clover/drivers/off/virtioblkdxe.efi /boot/EFI/CLOVER/drivers/uefi/VirtioBlkDxe.efi
+        cp /tmp/iso/efi/clover/drivers/off/virtioblkdxe.efi /boot/EFI/CLOVER/drivers/bios/VirtioBlkDxe.efi
+        
+        #find /boot
+
         # Chainload systemd-boot
         cat <<-EOF > /boot/EFI/CLOVER/config.plist
         <?xml version="1.0" encoding="UTF-8"?>
@@ -78,7 +84,7 @@ in
               <key>DefaultLoader</key>
               <string>\EFI\systemd\systemd-bootx64.efi</string>
               <key>Fast</key>
-		          <true/>
+		          <false/>
               <key>Debug</key>
               <false/>
             </dict>
@@ -121,6 +127,10 @@ EOF
         echo "Setting the active flag on the protective MBR partition..."
         ${pkgs.util-linux}/bin/sfdisk --activate /dev/vda 1 --force
         ${pkgs.parted}/bin/partprobe
+
+        # Couldn't get timeout to work without disable menu entirely.
+        sed -i 's/timeout.*//' /boot/loader/loader.conf
+
       '';
     };
     efi = {

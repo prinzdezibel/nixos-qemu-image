@@ -64,7 +64,7 @@ sudo qemu-system-aarch64 -enable-kvm -machine virt -cpu host -m 4G -smp 2 \
 -nographic
 ```
 
-Intel/AMD + UEFI: Start qemu image in VM:
+Intel/AMD + UEFI + KVM: Start qemu image in VM:
 ```
 sudo qemu-system-x86_64 -enable-kvm -machine q35 -cpu host -m 4G -smp 2 \
 -drive cache=writeback,file=nixos.qcow2,id=drive1,if=none,index=1,werror=report \
