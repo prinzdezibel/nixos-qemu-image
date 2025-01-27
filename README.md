@@ -83,8 +83,8 @@ sudo qemu-system-x86_64 -machine q35 -m 4G -smp 2 \
 
 Add channel, update it and rebuild:
 ```
-nix-channel --add https://nixos.org/channels/nixos-24.11 nixos
-nixos-rebuild boot -I nixos-config=/etc/nixos/configuration.nix --upgrade
+nix-channel --add https://nixos.org/channels/nixos-unstable nixos
+nixos-rebuild boot -I nixpkgs=/nix/var/nix/profiles/per-user/root/channels/nixos/nixpkgs -I nixos-config=/etc/nixos/configuration.nix --upgrade
 ```
 
 ## Convert image for usage in cloud environment (tested with Hetzner)
