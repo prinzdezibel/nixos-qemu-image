@@ -7,6 +7,10 @@ The image features cloud-init and is tested with shared and dedicated vCPUs at H
 ## Supported platforms
 x86_64-linux and aarch64-linux
 
+## Requirements
+- QEMU version >= 8.2
+- SeaBIOS version >= 1.16
+
 ## Steps
 
 To cross compile nixos images for other architectures you have to configure boot.binfmt.emulatedSystems on your host system. For example, if your build machine's CPU architecture is ARM64 (aarch64) put the following snippet into configuration.nix:
