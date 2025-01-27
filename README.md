@@ -54,7 +54,7 @@ cp result/nixos.qcow2 .
 chmod 755 nixos.qcow2
 ```
 
-ARM + UEFI: Start qemu image in VM:
+ARM + UEFI + KVM: Start qemu image in VM:
 ```
 sudo qemu-system-aarch64 -enable-kvm -machine virt -cpu host -m 4G -smp 2 \
 -drive cache=writeback,file=nixos.qcow2,id=drive1,if=none,index=1,werror=report \
