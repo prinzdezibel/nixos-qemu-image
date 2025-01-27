@@ -62,6 +62,9 @@
           };
 
           imports = [
+            ./configuration.nix
+            ./modules/base-system.nix
+            ./modules/cloud-init.nix
             (
               {
                 config,
@@ -71,7 +74,7 @@
                 ...
               }:
               let
-                configuration = builtins.readFile ./modules/configuration.nix;
+                configuration = builtins.readFile ./configuration.nix;
                 configFile = pkgs.writeText "configuration.nix" ''
                   {pkgs, ...}: {
                       imports = [ 
@@ -85,46 +88,40 @@
               in
               {
 
-                system.build.qcow = import "${toString modulesPath}/../lib/make-disk-image.nix" (
-                  {
-                    inherit lib config pkgs;
-                    inherit (config.virtualisation) diskSize;
-                    format = "qcow2";
-                    partitionTableType = "efi";
-                    bootSize = "2048M";
+                system.build.qcow = import "${toString modulesPath}/../lib/make-disk-image.nix" ({
+                  inherit lib config pkgs;
+                  inherit (config.virtualisation) diskSize;
+                  format = "qcow2";
+                  partitionTableType = "efi";
+                  bootSize = "2048M";
 
-                    contents = [
-                      # Touch /etc/os-release (needed by activation script)
-                      {
-                        source = pkgs.writeText "os-release" '''';
-                        target = "etc/os-release";
-                      }
-                      {
-                        source = configFile;
-                        target =
-                          if config.system.etc.overlay.enable then
-                            ".rw-etc/upper/nixos/configuration.nix"
-                          else
-                            "etc/nixos/configuration.nix";
-                        mode = "0755";
-                      }
-                      {
-                        source = ./modules;
-                        target =
-                          if config.system.etc.overlay.enable then ".rw-etc/upper/nixos/modules" else "etc/nixos/modules";
-                        mode = "0755";
-                      }
-                    ];
+                  contents = [
+                    # Touch /etc/os-release (needed by activation script)
+                    {
+                      source = pkgs.writeText "os-release" '''';
+                      target = "etc/os-release";
+                    }
+                    {
+                      source = configFile;
+                      target =
+                        if config.system.etc.overlay.enable then
+                          ".rw-etc/upper/nixos/configuration.nix"
+                        else
+                          "etc/nixos/configuration.nix";
+                      mode = "0755";
+                    }
+                    {
+                      source = ./modules;
+                      target =
+                        if config.system.etc.overlay.enable then ".rw-etc/upper/nixos/modules" else "etc/nixos/modules";
+                      mode = "0755";
+                    }
+                  ];
 
-                    touchEFIVars = config.boot.loader.efi.canTouchEfiVariables;
-                  }
-                );
+                  touchEFIVars = config.boot.loader.efi.canTouchEfiVariables;
+                });
               }
             )
-
-            ./modules/base-system.nix
-            ./modules/configuration.nix
-            ./modules/cloud-init.nix
           ];
 
           config = {

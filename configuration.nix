@@ -18,12 +18,7 @@ in
   };
 
   boot.loader = {
-    timeout = 4;
     systemd-boot = {
-      enable = true;
-      #edk2-uefi-shell.enable = false;
-      #editor = false;
-      configurationLimit = 5;
       extraInstallCommands = lib.mkIf (config.emulatedUEFI && pkgs.system == "x86_64-linux") ''
         set -euo pipefail
 
@@ -54,8 +49,6 @@ in
 
         # Copy Clover EFI files
         cp -R /tmp/iso/efi/clover /boot/EFI/
-
-        cp /boot/EFI/CLOVER/cloverx64.efi /boot/EFI/BOOT/BOOTX64.EFI
 
         cp /tmp/iso/efi/clover/drivers/off/virtiofsdxe.efi /boot/EFI/CLOVER/drivers/uefi/VirtioFsDxe.efi
         cp /tmp/iso/efi/clover/drivers/off/virtiofsdxe.efi /boot/EFI/CLOVER/drivers/bios/VirtioFsDxe.efi
@@ -128,14 +121,9 @@ EOF
         ${pkgs.util-linux}/bin/sfdisk --activate /dev/vda 1 --force
         ${pkgs.parted}/bin/partprobe
 
-        # Couldn't get timeout to work without disable menu entirely.
-        sed -i 's/timeout.*//' /boot/loader/loader.conf
-
       '';
     };
-    efi = {
-      canTouchEfiVariables = if pkgs.system != "x86_64-linux" then true else false;
-    };
+   
 
     # Cross-Compiling GRUB results in an error because of Perl dependency:
     # Can't locate XML/SAX.pm in @INC (you may need to install the XML::SAX module) 

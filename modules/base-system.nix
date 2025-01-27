@@ -36,13 +36,24 @@
     ];
   };
 
-  boot.initrd.systemd.enable = true;
-  boot.growPartition = true;
-  boot.kernelParams = [ "console=ttyS0" ];
+  boot = {
+    initrd.systemd.enable = true;
+    growPartition = true;
+    kernelParams = [ "console=ttyS0" ];
+    # Use the systemd-boot EFI boot loader.
+    loader.systemd-boot.enable = true;
+    loader.systemd-boot.configurationLimit = 5;
+    loader.timeout = 0; # Timeout does not work and seems to conflict with Clover timeout
+    #loader.systemd-boot.edk2-uefi-shell.enable = false;
+    #loader.systemd-boot.editor = false;
+    loader.efi = {
+      canTouchEfiVariables = if pkgs.system != "x86_64-linux" then true else false;
+    };
+  };
 
   # enable systemd-networkd
   systemd.network.enable = true;
-  
+
   #systemd.sysusers.enable = true;
   #services.userborn.enable = false;
 
@@ -50,11 +61,12 @@
   # disable dhcpcd
   networking.useDHCP = false;
 
-  environment.defaultPackages = with pkgs; [ cacert cloud-init ];
- 
-  system = {
-     
+  environment.defaultPackages = with pkgs; [
+    cacert
+    cloud-init
+  ];
 
+  system = {
     switch = {
       enable = false;
       enableNg = true; # switch-to-configuration-ng
