@@ -9,7 +9,7 @@ x86_64-linux and aarch64-linux
 
 ## Requirements
 - QEMU version >= 8.2
-- SeaBIOS version >= 1.16
+- SeaBIOS version >= 1.16, when using legacy BIOS (as opposed to UEFI) 
 
 ## Steps
 
