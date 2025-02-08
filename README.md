@@ -95,6 +95,7 @@ nixos-rebuild boot -I nixpkgs=/nix/var/nix/profiles/per-user/root/channels/nixos
 ```
  qemu-img convert -p -f qcow2 -O host_device nixos.qcow2 /dev/sda
 ```
+If you need more detail on how this works, have a look at the [terraform-hcloud-nixos](https://github.com/prinzdezibel/terraform-hcloud-nixos/blob/c35baf6c9bdd7fbe1af1598989472b314b73e39a/packer-template/hcloud-nixos-snapshots.pkr.hcl) project.
 
 ## Troubleshooting
 
