@@ -1,11 +1,15 @@
 # (Cross-) compile NixOS cloud images
 
-This flake allows to cross compile qcow images. The qcow image format can be directly used for QEMU, but it is also possible to convert it to a native host device format and write it directly to your cloud provider's hard disk. See [here](https://github.com/prinzdezibel/nixos-qemu-image?tab=readme-ov-file#convert-image-for-usage-in-cloud-environment-tested-with-hetzner) for an example. Of course compiling for the same CPU platform is supported as well. It's basically equivalent to nixos-generators' qow format, but uses systemd-boot UEFI boot manager and a modified nixpkgs repository that allows make-disk-image to make usage of a fully fledged QEMU qemu-system-x86_64 instance with TCG fallback instead of the qemu-kvm package which only supports machines with the same CPU architecture.
+This flake enables cross compiling NixOS qcow images. The qcow image format can be directly used for QEMU, but it is also possible to convert it to a native host device format and write it directly to your cloud provider's hard disk. See [here](https://github.com/prinzdezibel/nixos-qemu-image?tab=readme-ov-file#convert-image-for-usage-in-cloud-environment-tested-with-hetzner) for an example. Of course compiling for the same CPU platform is supported as well. Nixos-qemu-image boots via systemd-boot UEFI boot manager and a modified nixpkgs repository that allows make-disk-image to make usage of a fully fledged QEMU qemu-system-x86_64 instance with TCG fallback instead of the qemu-kvm package which only supports machines with the same CPU architecture.
 
-The image features cloud-init and is tested with shared and dedicated vCPUs at Hetzner Cloud. Please note that shared vCPUs hosts don't support systemd UEFI boot. For that to work you need to ensure the emulatedUEFI option is set to true (which is the default). This will install the Clover bootloader which is able to emulate UEFI environments on legacy BIOS systems. Once Clover is loaded it will acts as chainloader for regular systemd-boot. If your system is already UEFI enabled, you may set the option emulatedUEFI to false in [flake.nix](https://github.com/prinzdezibel/nixos-qemu-image/blob/9dde1872fb0bdf8136a022ff7890642ec0056167/flake.nix#L54).
+The image features cloud-init and is tested with shared and dedicated vCPUs at Hetzner Cloud. Please note that shared x86_64 vCPU hosts don't support systemd UEFI boot. For that to work you need to ensure the emulatedUEFI option is set to true (which is the default). This will install the Clover bootloader which is able to emulate UEFI environments on legacy BIOS systems. Once Clover is loaded it will act as chainloader for regular systemd-boot. If your system is already UEFI enabled, you may set the option emulatedUEFI to false in [flake.nix](https://github.com/prinzdezibel/nixos-qemu-image/blob/9dde1872fb0bdf8136a022ff7890642ec0056167/flake.nix#L54).
 
 ## Supported platforms
 x86_64-linux and aarch64-linux
+
+## Requirements
+- QEMU version >= 8.2
+- SeaBIOS version >= 1.16, when using legacy BIOS (as opposed to UEFI) 
 
 ## Steps
 
@@ -54,7 +58,7 @@ cp result/nixos.qcow2 .
 chmod 755 nixos.qcow2
 ```
 
-ARM + UEFI: Start qemu image in VM:
+ARM + UEFI + KVM: Start qemu image in VM:
 ```
 sudo qemu-system-aarch64 -enable-kvm -machine virt -cpu host -m 4G -smp 2 \
 -drive cache=writeback,file=nixos.qcow2,id=drive1,if=none,index=1,werror=report \
@@ -83,14 +87,15 @@ sudo qemu-system-x86_64 -machine q35 -m 4G -smp 2 \
 
 Add channel, update it and rebuild:
 ```
-nix-channel --add https://nixos.org/channels/nixos-24.11 nixos
-nixos-rebuild boot -I nixos-config=/etc/nixos/configuration.nix --upgrade
+nix-channel --add https://nixos.org/channels/nixos-unstable nixos
+nixos-rebuild boot -I nixpkgs=/nix/var/nix/profiles/per-user/root/channels/nixos/nixpkgs -I nixos-config=/etc/nixos/configuration.nix --upgrade
 ```
 
 ## Convert image for usage in cloud environment (tested with Hetzner)
 ```
  qemu-img convert -p -f qcow2 -O host_device nixos.qcow2 /dev/sda
 ```
+If you need more detail on how this works, have a look at the [terraform-hcloud-nixos](https://github.com/prinzdezibel/terraform-hcloud-nixos/blob/c35baf6c9bdd7fbe1af1598989472b314b73e39a/packer-template/hcloud-nixos-snapshots.pkr.hcl) project.
 
 ## Troubleshooting
 
