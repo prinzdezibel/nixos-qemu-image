@@ -1,8 +1,7 @@
 {
   inputs = {
     #nixpkgs.url = "/mnt/home/michael/github/NixOS/nixpkgs";
-    nixpkgs.url = "github:prinzdezibel/nixpkgs?ref=d0da7daf0ecc03be5acad2d0340d967530c97ca3";
-    #nixpkgs.url = "github:NixOS/nixpkgs?ref=staging";
+    nixpkgs.url = "github:prinzdezibel/nixpkgs?ref=5feb4e3ca232c6ba954313ab6dabfa58f4960969";
   };
 
   outputs =
@@ -149,7 +148,8 @@
             # This pulls in nixos-containers which depend on Perl.
             boot.enableContainers = false;
 
-            system.stateVersion = lib.version;
+            #system.stateVersion = lib.version;
+	    system.stateVersion = "25.05";
           };
         };
 
