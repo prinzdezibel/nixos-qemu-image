@@ -38,6 +38,9 @@
 
   boot = {
     initrd.systemd.enable = true;
+    # Set to true for unauthenticated emergency access in case of boot failure
+    initrd.systemd.emergencyAccess = false;
+     
     growPartition = true;
     kernelParams = [ "console=ttyS0" ];
     # Use the systemd-boot EFI boot loader.

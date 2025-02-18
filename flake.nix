@@ -1,7 +1,7 @@
 {
   inputs = {
     #nixpkgs.url = "/mnt/home/michael/github/NixOS/nixpkgs";
-    nixpkgs.url = "github:prinzdezibel/nixpkgs?ref=5feb4e3ca232c6ba954313ab6dabfa58f4960969";
+    nixpkgs.url = "github:prinzdezibel/nixpkgs?ref=5e4c87890807949d61b2c6c6c3052d9e0de71f47";
   };
 
   outputs =
@@ -48,7 +48,9 @@
           system,
           ...
         }:
-        {
+        let
+          majorMinorVersion="${lib.concatStringsSep "." (lib.take 2 (builtins.splitVersion lib.version))}";
+	in {
           options = {
             emulatedUEFI = lib.mkOption {
               type = lib.types.bool;
@@ -81,7 +83,7 @@
                         ${configuration}
                        ];
                       
-                      system.stateVersion = "${lib.version}";
+		      system.stateVersion = "${majorMinorVersion}";
                   }
                 '';
               in
@@ -148,8 +150,7 @@
             # This pulls in nixos-containers which depend on Perl.
             boot.enableContainers = false;
 
-            #system.stateVersion = lib.version;
-	    system.stateVersion = "25.05";
+	    system.stateVersion = majorMinorVersion;
           };
         };
 
