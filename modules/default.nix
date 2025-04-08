@@ -1,3 +1,6 @@
+# This function is copied from:
+# https://github.com/yunfachi/nypkgs/blob/master/lib/umport.nix
+# See also: https://github.com/yunfachi/nypkgs/blob/master/LICENSE
 { pkgs, lib, ... }:
 let
   umport =
